@@ -39,6 +39,6 @@ PORT=5001
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 JWT_SECRET=your_jwt_secret
-FRONTEND_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:5001
 NODE_ENV=development
 ```

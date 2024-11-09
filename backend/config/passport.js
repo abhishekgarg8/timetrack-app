@@ -4,7 +4,6 @@ const JwtStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
 const User = require('../models/User');
 
-// Helper function to get callback URL based on environment
 const getCallbackURL = () => {
   if (process.env.NODE_ENV === 'production') {
     return `${process.env.FRONTEND_URL}/auth/google/callback`;
@@ -12,7 +11,6 @@ const getCallbackURL = () => {
   return "http://localhost:5001/auth/google/callback";
 };
 
-// Google OAuth Strategy
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -23,12 +21,25 @@ passport.use(new GoogleStrategy({
       let user = await User.findOne({ googleId: profile.id });
       
       if (!user) {
+        // Create new user with default categories
         user = await User.create({
           googleId: profile.id,
           email: profile.emails[0].value,
           name: profile.displayName,
-          picture: profile.photos[0].value
+          picture: profile.photos[0].value,
+          preferences: {
+            defaultCategories: [
+              { name: 'Work', color: '#4F46E5' },
+              { name: 'Exercise', color: '#10B981' },
+              { name: 'Sleep', color: '#8B5CF6' },
+              { name: 'Personal', color: '#F59E0B' }
+            ]
+          }
         });
+      } else {
+        // Update lastLogin
+        user.lastLogin = new Date();
+        await user.save();
       }
       
       return done(null, user);
@@ -38,7 +49,7 @@ passport.use(new GoogleStrategy({
   }
 ));
 
-// JWT Strategy for protecting routes
+// Keep existing JWT Strategy
 passport.use(new JwtStrategy({
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     secretOrKey: process.env.JWT_SECRET

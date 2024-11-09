@@ -15,7 +15,19 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  picture: String,
+  picture: {
+    type: String
+  },
+  lastLogin: {
+    type: Date,
+    default: Date.now
+  },
+  preferences: {
+    defaultCategories: [{
+      name: String,
+      color: String
+    }]
+  },
   createdAt: {
     type: Date,
     default: Date.now

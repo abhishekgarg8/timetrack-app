@@ -3,12 +3,13 @@ const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
 
+// Keep existing routes
 router.get('/google',
   passport.authenticate('google', { scope: ['profile', 'email'] })
 );
 
 router.get('/google/callback',
-  passport.authenticate('google', { session: false }),
+  passport.authenticate('google', { session: false, failureRedirect: '/login' }),
   (req, res) => {
     try {
       const token = jwt.sign(
@@ -17,20 +18,52 @@ router.get('/google/callback',
         { expiresIn: '7d' }
       );
 
-      // For development
       if (process.env.NODE_ENV === 'development') {
-        res.redirect(`http://localhost:5001?token=${token}`);
+        res.redirect(`http://localhost:3000?token=${token}`);
       } else {
-        // For production
         res.redirect(`${process.env.FRONTEND_URL}?token=${token}`);
       }
     } catch (error) {
-      res.redirect('/auth-error');
+      res.redirect('/login?error=authentication_failed');
     }
   }
 );
 
-// Test endpoint to verify token
+// Get current user profile
+router.get('/me',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    try {
+      const user = await req.user;
+      res.json({
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        picture: user.picture,
+        preferences: user.preferences
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Error fetching user profile' });
+    }
+  }
+);
+
+// Update user preferences
+router.put('/preferences',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    try {
+      const user = await User.findById(req.user._id);
+      user.preferences = req.body.preferences;
+      await user.save();
+      res.json({ message: 'Preferences updated successfully' });
+    } catch (error) {
+      res.status(500).json({ message: 'Error updating preferences' });
+    }
+  }
+);
+
+// Keep existing verify-token endpoint
 router.get('/verify-token',
   passport.authenticate('jwt', { session: false }),
   (req, res) => {

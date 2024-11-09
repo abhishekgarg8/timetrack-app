@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const TimeSlot = require('../models/TimeSlot');
+const TimeSlot = require('../models/timeslot');
 
 // GET user's time slots for a specific date
 router.get('/:date', async (req, res) => {
